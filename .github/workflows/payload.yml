@@ -1,0 +1,73 @@
+name: Payload Extractor
+
+on:
+#  release:
+#    types: [published]
+#  push:
+#    branches:
+#      - master
+#    paths:
+#      - '.config'
+#  schedule:
+#    - cron: 0 8 * * 5
+  watch:
+    types: [started]
+    
+env:
+  PAYLOAD_URL: https://tdrive.manofuranium.workers.dev/20200304174041-klein-ota-signed_by_xiaomi_72ffccab1dc9d94658fa95c73b795489/payload.bin
+  ZIP_NAME: BlackShark
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+       - name: Checkout
+         uses: actions/checkout@master
+
+       - name: Initializing environments
+         run: |
+            sudo -E apt-get -qq update
+            sudo -E apt-get -qq install git openjdk-8-jdk wget
+            sudo apt-get install wget
+            sudo apt-get install p7zip-full
+            sudo apt-get update -y
+            sudo apt-get install -y simg2img  
+            sudo apt-get install unzip
+            sudo apt-get install zip gzip tar
+            sudo -E apt-get install expect
+            sudo apt update 2>/dev/null | grep packages
+        
+       - name: Extracting Payload
+         run: |
+              sudo aria2c http://tdrive.manofuranium.workers.dev/payload_dumper_tool_by_ius.zip
+              sudo unzip payload_dumper_tool_by_ius.zip
+              cd payload_dumper
+              sudo python3 -m pip install protobuf
+              sudo aria2c $PAYLOAD_URL
+              sudo python3 payload_dumper.py payload.bin
+              ls
+              
+       - name: Copying final zip
+         run: |
+              mkdir temp
+              sudo cp -r payload_dumper/$ZIP_NAME.zip temp
+              
+       - name: Uploading 
+         run: |
+              cd temp
+              expect -c "
+              spawn sftp ruiii@frs.sourceforge.net
+              expect \"yes/no\"
+              send \"yes\r\"
+              expect \"Password\"
+              send \"${{ secrets.PASSWORD }}\r\"
+              expect \"sftp> \"
+              send \"cd /home/pfs/project/rui-ports/dumps\r\"
+              set timeout -1
+              send \"put $ZIP_NAME.zip\r\"
+              expect \"Uploading\"
+              expect \"100%\"
+              expect \"sftp>\"
+              send \"bye\r\"
+              interact"
+       
