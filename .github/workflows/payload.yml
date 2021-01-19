@@ -39,9 +39,7 @@ jobs:
         
        - name: Extracting Payload
          run: |
-              sudo aria2c http://tdrive.manofuranium.workers.dev/payload_dumper_tool_by_ius.zip
-              sudo unzip payload_dumper_tool_by_ius.zip
-              cd payload_dumper
+              sudo aria2c https://getlink123.com/direct/RzELWwK0iDkj
               sudo python3 -m pip install protobuf
               sudo aria2c $PAYLOAD_URL
               sudo unzip *.zip
