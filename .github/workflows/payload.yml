@@ -14,7 +14,7 @@ on:
     types: [started]
     
 env:
-  PAYLOAD_URL: https://tdrive.manofuranium.workers.dev/20200304174041-klein-ota-signed_by_xiaomi_72ffccab1dc9d94658fa95c73b795489/payload.bin
+  PAYLOAD_URL: http://cdn-test-ota.blackshark.com/MBU-A0/20200320184204-mobius-ota-signed_by_xiaomi_3bb08f76617583d8b9e358f20339bade.zip
   ZIP_NAME: BlackShark
 jobs:
   build:
@@ -44,6 +44,7 @@ jobs:
               cd payload_dumper
               sudo python3 -m pip install protobuf
               sudo aria2c $PAYLOAD_URL
+              sudo unzip *.zip
               sudo python3 payload_dumper.py payload.bin
               ls
               
@@ -56,13 +57,13 @@ jobs:
          run: |
               cd temp
               expect -c "
-              spawn sftp ruiii@frs.sourceforge.net
+              spawn sftp ${{ secrets.SFUSER }}@frs.sourceforge.net
               expect \"yes/no\"
               send \"yes\r\"
               expect \"Password\"
-              send \"${{ secrets.PASSWORD }}\r\"
+              send \"${{ secrets.SFPASS }}\r\"
               expect \"sftp> \"
-              send \"cd /home/pfs/project/rui-ports/dumps\r\"
+              send \"cd /home/pfs/project/vietnam-gsi/sgsi\r\"
               set timeout -1
               send \"put $ZIP_NAME.zip\r\"
               expect \"Uploading\"
